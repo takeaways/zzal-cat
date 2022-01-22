@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>고양이 가라사대</title>
+  </head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      -ms-overflow-style: none;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    button {
+      border: none;
+      outline: none;
+      padding: 0.2em;
+      border-radius: 5px;
+    }
+    #app {
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      left: 0;
+      top: 0;
+      width: 100%;
+      backdrop-filter: blur(5px);
+      height: 50vh;
+      margin-bottom: 50px;
+    }
+
+    header h1 {
+      background-color: white;
+    }
+
+    form {
+      min-width: 320px;
+      max-width: 480px;
+      margin: 25px auto;
+      padding: 20px;
+    }
+
+    form > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      position: relative;
+      border-radius: 5px;
+      border: 1px solid dodgerblue;
+    }
+
+    form > div span {
+      position: absolute;
+      bottom: -25px;
+      left: 15px;
+      font-size: 0.8rem;
+    }
+    form input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 0.2em;
+      font-size: 1.2rem;
+      caret-color: dodgerblue;
+      color: dodgerblue;
+      text-overflow: ellipsis;
+      width: 100%;
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+      padding-left: 12px;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+    button:active {
+      opacity: 1;
+    }
+    form button {
+      cursor: pointer;
+      border: none;
+      padding: 0.2em;
+      font-size: 1.2rem;
+      background-color: dodgerblue;
+      color: white;
+      border-radius: 0;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      outline: none;
+    }
+
+    .main-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .main-card-img-wrapper {
+      position: relative;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 3px 3px 3px rgba(0, 88, 234, 0.3);
+    }
+
+    .main-card-img-wrapper img {
+      display: block;
+    }
+    .main-card-img-wrapper button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 0.2em;
+      background-color: dodgerblue;
+      cursor: pointer;
+    }
+    .favorites {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .favorites img {
+      width: 150px;
+      border-radius: 15px;
+      display: block;
+      box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+  <body>
+    <div id="app"></div>
+
+    <script
+      src="https://unpkg.com/react@17/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+      const CAT1 = "https://cataas.com/cat/60b73094e04e18001194a309/says/react";
+      const CAT2 =
+        "https://cataas.com//cat/5e9970351b7a400011744233/says/inflearn";
+      const CAT3 =
+        "https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript";
+
+      const jsonLocalStorage = {
+        setItem: (key, value) => {
+          localStorage.setItem(key, JSON.stringify(value));
+        },
+        getItem: (key) => {
+          return JSON.parse(localStorage.getItem(key));
+        },
+      };
+
+      const Title = ({ children }) => <h1>{children}</h1>;
+      const Form = ({ updateMainCat }) => {
+        const [value, setValue] = React.useState("");
+        const [isKorean, setIsKorean] = React.useState(false);
+        const [isEmpty, setIsEmpty] = React.useState(false);
+        const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
+
+        const resetError = () => {
+          setIsKorean(false);
+          setIsEmpty(false);
+        };
+
+        const handleFormSubmit = (e) => {
+          e.preventDefault();
+          if (value.trim() === "") {
+            return setIsEmpty(true);
+          }
+          updateMainCat(value);
+          setValue("");
+        };
+
+        const handleInputChange = (e) => {
+          resetError();
+          const text = e.target.value.toUpperCase();
+          if (includesHangul(text)) {
+            return setIsKorean(true);
+          }
+          setValue(e.target.value.toUpperCase());
+        };
+
+        const getErrorMessage = () => {
+          if (isKorean) return "한글은 사용할 수 없습니다.";
+          if (isEmpty) return "값을 입력해 주세요!";
+        };
+
+        const hasError = isKorean || isEmpty;
+
+        return (
+          <form onSubmit={handleFormSubmit}>
+            <div>
+              <input
+                type="text"
+                name="name"
+                placeholder="영어 대사를 입력해주세요"
+                value={value}
+                onChange={handleInputChange}
+              />
+              <button type="submit">Create New</button>
+              {hasError && (
+                <span style={{ color: "red" }}>{getErrorMessage()}</span>
+              )}
+            </div>
+          </form>
+        );
+      };
+
+      const CatItem = ({ img }) => (
+        <li>
+          <img src={img} />
+        </li>
+      );
+
+      const Favorites = ({ favorites }) => (
+        <ul className="favorites">
+          {favorites.map((cat) => (
+            <CatItem key={cat} img={cat} />
+          ))}
+        </ul>
+      );
+
+      const MainCard = ({ img, onHeartClick }) => {
+        return (
+          <div className="main-card">
+            <div className="main-card-img-wrapper">
+              <img src={img} alt="고양이" width="400" />
+              <button onClick={onHeartClick}>🤍</button>
+            </div>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const [counter, setCounter] = React.useState(
+          jsonLocalStorage.getItem("counter")
+        );
+        const [mainCatImg, setMainCatImg] = React.useState(CAT1);
+        const [favorites, setFavorites] = React.useState(
+          jsonLocalStorage.getItem("favorites") || []
+        );
+
+        const changeNewMainCatImg = () => {
+          setMainCatImg(CAT2);
+        };
+
+        const updateMainCat = (inputValue) => {
+          changeNewMainCatImg();
+          const nextCounter = counter + 1;
+          setCounter(nextCounter);
+          jsonLocalStorage.setItem("counter", nextCounter);
+        };
+
+        function handleHeartClick() {
+          const nextFavorites = [...favorites, mainCatImg];
+          setFavorites(nextFavorites);
+          jsonLocalStorage.setItem("favorites", nextFavorites);
+        }
+
+        return (
+          <div>
+            <header>
+              <Title>{counter}번째 고양이 가라사대</Title>
+              <Form updateMainCat={updateMainCat} />
+              <MainCard img={mainCatImg} onHeartClick={handleHeartClick} />
+            </header>
+            <Favorites favorites={favorites} />
+          </div>
+        );
+      };
+
+      ReactDOM.render(<App />, document.querySelector("#app"));
+    </script>
+  </body>
+</html>
