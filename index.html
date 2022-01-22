@@ -15,6 +15,7 @@
       text-align: center;
       margin: 0;
       padding: 0;
+      padding-top: 50vh;
       -ms-overflow-style: none;
     }
     ::-webkit-scrollbar {
@@ -31,13 +32,15 @@
     }
 
     header {
-      position: sticky;
+      position: fixed;
       left: 0;
       top: 0;
       width: 100%;
       backdrop-filter: blur(5px);
-      height: 50vh;
-      margin-bottom: 50px;
+      /* height: 50vh; */
+      display: flex;
+      flex-direction: column;
+      /* overflow: hidden; */
     }
 
     header h1 {
@@ -47,7 +50,7 @@
     form {
       min-width: 320px;
       max-width: 480px;
-      margin: 25px auto;
+      margin: 5px auto;
       padding: 20px;
     }
 
@@ -116,6 +119,9 @@
 
     .main-card-img-wrapper img {
       display: block;
+      object-fit: contain;
+      max-width: 400px;
+      max-height: 300px;
     }
     .main-card-img-wrapper button {
       position: absolute;
@@ -138,6 +144,20 @@
       border-radius: 15px;
       display: block;
       box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.3);
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
     }
   </style>
   <body>
@@ -167,6 +187,15 @@
         getItem: (key) => {
           return JSON.parse(localStorage.getItem(key));
         },
+      };
+
+      const fetchCat = async (text) => {
+        const OPEN_API_DOMAIN = "https://cataas.com";
+        const response = await fetch(
+          `${OPEN_API_DOMAIN}/cat/says/${text}?json=true`
+        );
+        const responseJson = await response.json();
+        return `${OPEN_API_DOMAIN}/${responseJson.url}`;
       };
 
       const Title = ({ children }) => <h1>{children}</h1>;
@@ -239,11 +268,11 @@
         </ul>
       );
 
-      const MainCard = ({ img, onHeartClick }) => {
+      const MainCard = ({ loadedMainCat, img, onHeartClick }) => {
         return (
           <div className="main-card">
             <div className="main-card-img-wrapper">
-              <img src={img} alt="고양이" width="400" />
+              <img src={img} alt="고양이" onLoad={loadedMainCat} />
               <button onClick={onHeartClick}>🤍</button>
             </div>
           </div>
@@ -254,20 +283,23 @@
         const [counter, setCounter] = React.useState(
           jsonLocalStorage.getItem("counter")
         );
-        const [mainCatImg, setMainCatImg] = React.useState(CAT1);
+        const [mainCatImg, setMainCatImg] = React.useState("");
         const [favorites, setFavorites] = React.useState(
           jsonLocalStorage.getItem("favorites") || []
         );
 
-        const changeNewMainCatImg = () => {
-          setMainCatImg(CAT2);
-        };
+        const [isLoading, setIsLoading] = React.useState(false);
 
-        const updateMainCat = (inputValue) => {
-          changeNewMainCatImg();
+        const updateCounter = () => {
           const nextCounter = counter + 1;
           setCounter(nextCounter);
           jsonLocalStorage.setItem("counter", nextCounter);
+        };
+
+        const updateMainCat = async (inputValue) => {
+          setIsLoading(true);
+          setMainCatImg(await fetchCat(inputValue));
+          updateCounter();
         };
 
         function handleHeartClick() {
@@ -276,14 +308,27 @@
           jsonLocalStorage.setItem("favorites", nextFavorites);
         }
 
+        function loadedMainCat() {
+          setIsLoading(false);
+        }
+
+        React.useEffect(() => {
+          updateMainCat(`${counter + 1} cat`);
+        }, []);
+
         return (
           <div>
             <header>
               <Title>{counter}번째 고양이 가라사대</Title>
               <Form updateMainCat={updateMainCat} />
-              <MainCard img={mainCatImg} onHeartClick={handleHeartClick} />
+              <MainCard
+                loadedMainCat={loadedMainCat}
+                img={mainCatImg}
+                onHeartClick={handleHeartClick}
+              />
             </header>
             <Favorites favorites={favorites} />
+            {isLoading && <div id="loading">loading...</div>}
           </div>
         );
       };
