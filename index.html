@@ -15,7 +15,7 @@
       text-align: center;
       margin: 0;
       padding: 0;
-      padding-top: 50vh;
+      padding-top: 60vh;
       -ms-overflow-style: none;
     }
     ::-webkit-scrollbar {
@@ -260,40 +260,56 @@
         </li>
       );
 
-      const Favorites = ({ favorites }) => (
-        <ul className="favorites">
-          {favorites.map((cat) => (
-            <CatItem key={cat} img={cat} />
-          ))}
-        </ul>
-      );
+      const Favorites = ({ favorites }) => {
+        if (favorites.length === 0) {
+          return <div>사진 위 하트를 눌러 고양이 사진을 저장해 보세요!</div>;
+        }
+        return (
+          <ul className="favorites">
+            {favorites.map((cat) => (
+              <CatItem key={cat} img={cat} />
+            ))}
+          </ul>
+        );
+      };
 
-      const MainCard = ({ loadedMainCat, img, onHeartClick }) => {
+      const MainCard = ({
+        loadedMainCat,
+        img,
+        onHeartClick,
+        alreadyFavorite,
+      }) => {
+        const heartIcon = alreadyFavorite ? "💖" : "🤍";
+
         return (
           <div className="main-card">
             <div className="main-card-img-wrapper">
               <img src={img} alt="고양이" onLoad={loadedMainCat} />
-              <button onClick={onHeartClick}>🤍</button>
+              <button onClick={onHeartClick}>{heartIcon}</button>
             </div>
           </div>
         );
       };
 
       const App = () => {
-        const [counter, setCounter] = React.useState(
+        const [counter, setCounter] = React.useState(() =>
           jsonLocalStorage.getItem("counter")
         );
         const [mainCatImg, setMainCatImg] = React.useState("");
         const [favorites, setFavorites] = React.useState(
-          jsonLocalStorage.getItem("favorites") || []
+          () => jsonLocalStorage.getItem("favorites") || []
         );
 
         const [isLoading, setIsLoading] = React.useState(false);
 
+        const alreadyFavorite = favorites.includes(mainCatImg);
+
         const updateCounter = () => {
-          const nextCounter = counter + 1;
-          setCounter(nextCounter);
-          jsonLocalStorage.setItem("counter", nextCounter);
+          setCounter((counter) => {
+            const nextCounter = counter + 1;
+            jsonLocalStorage.setItem("counter", nextCounter);
+            return nextCounter;
+          });
         };
 
         const updateMainCat = async (inputValue) => {
@@ -303,7 +319,14 @@
         };
 
         function handleHeartClick() {
-          const nextFavorites = [...favorites, mainCatImg];
+          let nextFavorites;
+          const isIncluded = favorites.includes(mainCatImg);
+          if (isIncluded) {
+            nextFavorites = favorites.filter((c) => c !== mainCatImg);
+          } else {
+            nextFavorites = [...favorites, mainCatImg];
+          }
+
           setFavorites(nextFavorites);
           jsonLocalStorage.setItem("favorites", nextFavorites);
         }
@@ -322,6 +345,7 @@
               <Title>{counter}번째 고양이 가라사대</Title>
               <Form updateMainCat={updateMainCat} />
               <MainCard
+                alreadyFavorite={alreadyFavorite}
                 loadedMainCat={loadedMainCat}
                 img={mainCatImg}
                 onHeartClick={handleHeartClick}
